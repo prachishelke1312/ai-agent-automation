@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { validateGraph } from '@/utils/graphValidation';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -18,6 +19,32 @@ import { NodeDefinition } from '@/types/workflow';
 import { useEffect } from 'react';
 import { Save, Play, Plus, Trash2, AlertTriangle, Download } from 'lucide-react';
 import { generateNodeId } from '@/utils/ids'; // ✅ Using centralized ID system
+=======
+import { validateGraphIntegrity } from "@/utils/graphValidation";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Card } from "@/components/ui/card";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { useAssistantContext } from "@/context/assistant-context";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import VisualBuilder from "@/components/workflow/visual-builder";
+import { Textarea } from "@/components/ui/textarea";
+import { useEffect } from "react";
+import {
+  Save,
+  Play,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Download,
+  X,
+} from "lucide-react";
+import { generateNodeId } from "@/utils/ids"; // ✅ Using centralized ID system
+>>>>>>> 1e02176 (feat(frontend): improve workflow builder step search)
 import {
   Select,
   SelectContent,
@@ -94,7 +121,25 @@ function summarizeStep(step: WorkflowStep, nodeDefinitions: NodeDefinition[] = [
   // Fallback for types not yet in nodeDefinitions
   return `${step.type} step`;
 }
+function highlightMatch(text: string, query: string) {
+  if (!query.trim()) return text;
 
+  const regex = new RegExp(`(${query})`, "ig");
+  const parts = text.split(regex);
+
+  return parts.map((part, index) =>
+    regex.test(part) ? (
+      <mark
+        key={index}
+        className="rounded bg-yellow-200 px-0.5 text-black"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
 export default function WorkflowBuilderPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -112,12 +157,20 @@ export default function WorkflowBuilderPage() {
   const [savedEdgesSnapshot, setSavedEdgesSnapshot] = useState<string>('[]');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [invalidNodeIds, setInvalidNodeIds] = useState<string[]>([]);
+<<<<<<< HEAD
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const hasUnsavedChanges =
     JSON.stringify(steps) !== savedStepsSnapshot || JSON.stringify(edges) !== savedEdgesSnapshot;
+=======
+  const [stepSearch, setStepSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const hasUnsavedChanges = 
+    JSON.stringify(steps) !== savedStepsSnapshot || 
+    JSON.stringify(edges) !== savedEdgesSnapshot;
+>>>>>>> 1e02176 (feat(frontend): improve workflow builder step search)
 
   useEffect(() => {
     if (steps.length === 0) {
@@ -141,7 +194,13 @@ export default function WorkflowBuilderPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(stepSearch);
+    }, 300);
 
+    return () => clearTimeout(timer);
+  }, [stepSearch]);
   async function fetchWorkflow() {
     try {
       const res = await fetch(apiUrl(`/workflows/${id}`), {
@@ -336,7 +395,7 @@ export default function WorkflowBuilderPage() {
     ]);
   }
   const filteredSteps = steps.filter((step) => {
-  const query = stepSearch.trim().toLowerCase();
+  const query = debouncedSearch.trim().toLowerCase();
 
   if (!query) return true;
 
@@ -728,10 +787,40 @@ export default function WorkflowBuilderPage() {
               </ReactFlowProvider>
             )}
 
+<<<<<<< HEAD
             {builderMode === 'list' && (
               <div className="mx-auto max-w-3xl space-y-4">
                 <AnimatePresence initial={false}>
                   {steps.map((step, index) => (
+=======
+            {builderMode === "list" && (
+  <div className="mx-auto max-w-3xl space-y-4">
+    <div className="flex items-center gap-2">
+      <Input
+        placeholder="Search steps by name or type..."
+        value={stepSearch}
+        onChange={(e) => setStepSearch(e.target.value)}
+      />
+
+      {stepSearch && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setStepSearch("")}
+          className="h-8 w-8"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+    {filteredSteps.length === 0 && (
+      <Card className="p-6 text-center text-sm text-muted-foreground">
+        No steps found for "{stepSearch}".
+      </Card>
+    )}  
+    <AnimatePresence initial={false}>
+      {filteredSteps.map((step, index) => (
+>>>>>>> 1e02176 (feat(frontend): improve workflow builder step search)
                     <motion.div
                       key={step.id}
                       layout
@@ -769,8 +858,16 @@ export default function WorkflowBuilderPage() {
                             >
                               {index + 1}
                             </motion.span>
+<<<<<<< HEAD
                             <Badge variant="outline" className={getTypeColor(step.type)}>
                               {step.type}
+=======
+                            <Badge
+                              variant="outline"
+                              className={getTypeColor(step.type)}
+                            >
+                              {highlightMatch(step.type, debouncedSearch)}
+>>>>>>> 1e02176 (feat(frontend): improve workflow builder step search)
                             </Badge>
                           </div>
 
@@ -826,7 +923,13 @@ export default function WorkflowBuilderPage() {
                                 })
                               }
                             />
+                          {debouncedSearch && (
+                              <div className="mb-1 text-sm">
+                                {highlightMatch(step.name, debouncedSearch)}
+                              </div>
+                            )}
                           </div>
+<<<<<<< HEAD
 
                           {(() => {
                             const def = nodeDefinitions.find(d => d.id === step.type || (step.type === 'Tool' && d.id === step.tool));
@@ -839,6 +942,191 @@ export default function WorkflowBuilderPage() {
                                     field={field}
                                     value={step.config?.[field.name]}
                                     onChange={(val) => {
+=======
+                          {step.type === "Tool" && (
+                            <>
+                              <div>
+                                <Label>Tool</Label>
+                                <Select
+                                  value={step.tool}
+                                  onValueChange={(v) =>
+                                    updateStep(step.id, { tool: v as any })
+                                  }
+                                >
+                                  <SelectTrigger className="mt-1.5">
+                                    <SelectValue placeholder="Select tool" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="email">Email</SelectItem>
+                                    <SelectItem value="file">File</SelectItem>
+                                    <SelectItem value="browser">Browser</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {step.tool === "email" && (
+                                <>
+                                  <div>
+                                    <Label>To</Label>
+                                    <Input
+                                      className="mt-1.5"
+                                      value={step.to ?? ""}
+                                      onChange={(e) =>
+                                        updateStep(step.id, {
+                                          to: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Subject</Label>
+                                    <Input
+                                      className="mt-1.5"
+                                      value={step.subject ?? ""}
+                                      onChange={(e) =>
+                                        updateStep(step.id, {
+                                          subject: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>Text</Label>
+                                    <Textarea
+                                      className="mt-1.5"
+                                      value={step.text ?? ""}
+                                      onChange={(e) =>
+                                        updateStep(step.id, {
+                                          text: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </>
+                              )}
+
+                              {step.tool === "file" && (
+                                <>
+                                  <div>
+                                    <Label>Action</Label>
+                                    <Select
+                                      value={step.action}
+                                      onValueChange={(v) =>
+                                        updateStep(step.id, { action: v })
+                                      }
+                                    >
+                                      <SelectTrigger className="mt-1.5">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="write">Write</SelectItem>
+                                        <SelectItem value="append">Append</SelectItem>
+                                        <SelectItem value="read">Read</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label>Path</Label>
+                                    <Input
+                                      className="mt-1.5"
+                                      value={step.path ?? ""}
+                                      onChange={(e) =>
+                                        updateStep(step.id, {
+                                          path: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  {step.action !== "read" && (
+                                    <div>
+                                      <Label>Content</Label>
+                                      <Textarea
+                                        className="mt-1.5"
+                                        value={step.content ?? ""}
+                                        onChange={(e) =>
+                                          updateStep(step.id, {
+                                            content: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              {step.tool === "browser" && (
+                                <>
+                                  <div>
+                                    <Label>Action</Label>
+                                    <Select
+                                      value={step.action}
+                                      onValueChange={(v) =>
+                                        updateStep(step.id, { action: v })
+                                      }
+                                    >
+                                      <SelectTrigger className="mt-1.5">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="screenshot">Screenshot</SelectItem>
+                                        <SelectItem value="evaluate">Evaluate</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label>URL</Label>
+                                    <Input
+                                      className="mt-1.5"
+                                      value={step.url ?? ""}
+                                      onChange={(e) =>
+                                        updateStep(step.id, {
+                                          url: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                  {step.action === "evaluate" && (
+                                    <div>
+                                      <Label>Code</Label>
+                                      <Textarea
+                                        className="mt-1.5 font-mono text-sm"
+                                        value={step.code ?? ""}
+                                        onChange={(e) =>
+                                          updateStep(step.id, {
+                                            code: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {step.type === "LLM" && (
+                            <>
+                              <div>
+                                <Label>Prompt</Label>
+                                <Textarea
+                                  className="mt-1.5 min-h-[100px] font-mono text-sm"
+                                  value={step.prompt ?? ""}
+                                  onChange={(e) =>
+                                    updateStep(step.id, {
+                                      prompt: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="mt-4 rounded-lg border border-muted p-4">
+                                <p className="text-sm font-semibold mb-3">Advanced Options</p>
+                                <div className="flex items-center justify-between">
+                                  <Label className="cursor-pointer">Use Agent Memory</Label>
+                                  <input
+                                    type="checkbox"
+                                    checked={step.useMemory ?? false}
+                                    onChange={(e) =>
+>>>>>>> 1e02176 (feat(frontend): improve workflow builder step search)
                                       updateStep(step.id, {
                                         config: {
                                           ...(step.config || {}),
